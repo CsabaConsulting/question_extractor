@@ -9,7 +9,7 @@ output_filepath = Path('./data/questions.json')
 # Before running the code, one must replace the "API_KEY" in question_extractor/__init__.py with his own API key
 
 # Run the question extraction on the input directory
-extracted_questions = extract_questions_from_directory(input_directory)
+extracted_questions = extract_questions_from_directory(input_directory, parallel=False, max_qa_pairs=0)
 # Save the extracted questions as a JSON file
 with open(output_filepath, 'w') as output_file:
     json.dump(extracted_questions, output_file, indent=4)

@@ -47,6 +47,7 @@ def flatten_nested_lists(nested_lists):
 
 @retry(
     wait=wait_random_exponential(min=15, max=40),
+    # sleep=1,
 )
 async def run_model(messages):
     """
@@ -78,9 +79,11 @@ async def run_model(messages):
             output = await model._agenerate(messages)
     except openai.error.RateLimitError as e:
         print(f"ERROR ({e}): Rate limit exceeded, retrying.")
+        await asyncio.sleep(1)
         raise  # Re-raise the exception to allow tenacity to handle the retry
     except openai.error.APIConnectionError as e:
         print(f"ERROR ({e}): Could not connect, retrying.")
+        await asyncio.sleep(1)
         raise  # Re-raise the exception to allow tenacity to handle the retry
     except Exception as e:
         print(f"ERROR ({e}): Could not generate text for an input.")
@@ -114,7 +117,7 @@ def extract_questions_from_output(output):
     return questions
 
 
-async def extract_questions_from_text(file_path, text):
+async def extract_questions_from_text(file_path, text, parallel=True):
     """
     Asynchronously extracts questions from the given text.
     
@@ -136,13 +139,19 @@ async def extract_questions_from_text(file_path, text):
 
         # Build tasks for each subsection of the text
         tasks = []
+        task_outputs = []
         for sub_title, sub_text in split_markdown(text):
             sub_file_path = file_path + '/' + sub_title.replace('# ', '#').replace(' ', '-').lower()
             task = extract_questions_from_text(sub_file_path, sub_text)
-            tasks.append(task)
+            if parallel:
+                tasks.append(task)
+            else:
+                task_output = await task
+                task_outputs.append(task_output)
 
-        # Asynchronously run tasks and gather outputs
-        tasks_outputs = await asyncio.gather(*tasks)
+        if parallel:
+            # Asynchronously run tasks and gather outputs
+            tasks_outputs = await asyncio.gather(*tasks)
 
         # Flatten and return the results
         return flatten_nested_lists(tasks_outputs)
@@ -178,7 +187,7 @@ async def generate_answer(question, source):
 #---------------------------------------------------------------------------------------------
 # FILE PROCESSING
 
-async def process_file(file_path, text, progress_counter, verbose=True,max_qa_pairs=300):
+async def process_file(file_path, text, progress_counter, verbose=True, parallel=True, max_qa_pairs=300):
     """
     Asynchronously processes a file, extracting questions and generating answers concurrently.
     
@@ -192,10 +201,11 @@ async def process_file(file_path, text, progress_counter, verbose=True,max_qa_pa
         list: A list of dictionaries containing source, question, and answer information.
     """
     # Extract questions from the text
-    questions = await extract_questions_from_text(file_path, text)
+    questions = await extract_questions_from_text(file_path, text, parallel=parallel)
 
     # Limit the number of questions processed
-    questions = questions[:max_qa_pairs]
+    if max_qa_pairs > 0:
+        questions = questions[:max_qa_pairs]
 
     # Build and run answering tasks concurrently
     tasks = []
@@ -218,7 +228,7 @@ async def process_file(file_path, text, progress_counter, verbose=True,max_qa_pa
     return result
 
 
-async def process_files(files, verbose=True):
+async def process_files(files, verbose=True, parallel=True, max_qa_pairs=300):
     """
     Asynchronously processes a list of files, extracting questions and generating answers concurrently.
     
@@ -236,11 +246,18 @@ async def process_files(files, verbose=True):
 
     # Build and run tasks for each file concurrently
     tasks = []
+    tasks_outputs = []
     for file_path, text in files:
-        task = process_file(file_path, text, progress_counter, verbose=verbose)
-        tasks.append(task)
+        task = process_file(file_path, text, progress_counter, verbose=verbose, max_qa_pairs=max_qa_pairs)
+        if parallel:
+            tasks.append(task)
+        else:
+            tasks_output = await task
+            tasks_outputs.append(tasks_output)
+            await asyncio.sleep(0.02)
 
-    tasks_outputs = await asyncio.gather(*tasks)
+    if parallel:
+        tasks_outputs = await asyncio.gather(*tasks)
 
     # Merge results from all tasks
     return flatten_nested_lists(tasks_outputs)
@@ -248,7 +265,7 @@ async def process_files(files, verbose=True):
 #---------------------------------------------------------------------------------------------
 # MAIN
 
-def extract_questions_from_directory(input_folder, verbose=True):
+def extract_questions_from_directory(input_folder, verbose=True, parallel=True, max_qa_pairs=300):
     """
     Extracts questions and answers from all markdown files in the input folder.
 
@@ -265,7 +282,7 @@ def extract_questions_from_directory(input_folder, verbose=True):
 
     # Run question extraction tasks
     loop = asyncio.get_event_loop()
-    results = loop.run_until_complete(process_files(files, verbose=verbose))
+    results = loop.run_until_complete(process_files(files, verbose=verbose, parallel=parallel, max_qa_pairs=max_qa_pairs))
 
     if verbose: print(f"Done, {len(results)} question/answer pairs have been generated!")
     return results
