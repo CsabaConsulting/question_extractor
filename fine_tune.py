@@ -3,7 +3,7 @@ import os
 import openai
 
 # Define the fine tune file path
-input_filepath = Path('./data/questions.json')
+input_filepath = Path('./data/fine_tune.jsonl')
 epochs = 3
 
 openai.api_key = os.getenv('OPENAI_API_KEY')
