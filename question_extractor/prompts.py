@@ -4,7 +4,7 @@ from langchain.schema import HumanMessage, SystemMessage
 # EXTRACTION
 
 # prompt used to extract questions
-extraction_system_prompt="You are an expert user extracting information to quiz people on documentation. You will be passed a page extracted from the documentation, write a numbered list of questions that can be answered based *solely* on the given text."
+extraction_system_prompt="You are an expert user extracting information to quiz people on ThruThink software's help documentation. You will be passed a page extracted from the help documentation, write a numbered list of questions that can be answered based *solely* on the given help text. When the page refers to \"text\" it really means the help of ThruThink."
 
 def create_extraction_conversation_messages(text):
     """
