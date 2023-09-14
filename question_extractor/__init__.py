@@ -291,7 +291,7 @@ async def process_files(files, verbose=True, parallel=True, max_qa_pairs=300):
         else:
             tasks_output = await task
             tasks_outputs.append(tasks_output)
-            await asyncio.sleep(0.02)
+            await asyncio.sleep(0.005)
 
     if parallel:
         tasks_outputs = await asyncio.gather(*tasks)
