@@ -1,3 +1,4 @@
+import json
 import re
 import os
 import asyncio
@@ -239,6 +240,9 @@ async def process_file(file_path, text, progress_counter, verbose=True, parallel
     # Limit the number of questions processed
     if max_qa_pairs > 0:
         questions = questions[:max_qa_pairs]
+
+    with open(f"{file_path}.json", 'w') as output_file:
+        json.dump(questions, output_file, indent=2)
 
     # Build and run answering tasks concurrently
     tasks = []
