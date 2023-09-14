@@ -9,6 +9,8 @@ from tenacity import (
 import openai.error
 from aiolimiter import AsyncLimiter
 from langchain.chat_models import ChatOpenAI
+from langchain.docstore.document import Document
+from langchain.text_splitter import MarkdownHeaderTextSplitter, RecursiveCharacterTextSplitter
 from contextlib import asynccontextmanager
 from .markdown import load_markdown_files_from_directory, split_markdown
 from .token_counting import count_tokens_text, count_tokens_messages, get_available_tokens, are_tokens_available_for_both_conversations
@@ -156,13 +158,44 @@ async def extract_questions_from_text(file_path, text, parallel=True):
         # Flatten and return the results
         return flatten_nested_lists(tasks_outputs)
     else:
-        # Run the model to extract questions
-        messages = create_extraction_conversation_messages(text)
-        output = await run_model(messages)
-        questions = extract_questions_from_output(output)
+        # The first split is the whole
+        all_splits = [Document(page_content=text)]
 
-        # Associate questions with source information and return as a list of tuples
-        outputs = [(file_path, text, question.strip()) for question in questions]
+        # Then we chunk up the rest (in an intelligent way context aware)
+        # https://python.langchain.com/docs/use_cases/question_answering/how_to/document-context-aware-QA
+        headers_to_split_on = [
+            # ("#", "Title"),
+            # ("##", "Category"),
+            ("###", "Section"),
+        ]
+        markdown_splitter = MarkdownHeaderTextSplitter(headers_to_split_on=headers_to_split_on)
+        md_header_splits = markdown_splitter.split_text(text)
+
+        chunk_size = 500
+        chunk_overlap = 150
+        text_splitter = RecursiveCharacterTextSplitter(
+            chunk_size=chunk_size, chunk_overlap=chunk_overlap
+        )
+        all_splits.extend(text_splitter.split_documents(md_header_splits))
+
+        lines = text.split("\n")
+        title = lines[0]
+        category = lines[1]
+        prepend = "\n".join([title, category, ""])
+        outputs = []
+        for split in all_splits:
+            text_chunk = split.page_content
+            if not text_chunk.startswith(prepend):
+                text_chunk = prepend + text_chunk
+
+            # Run the model to extract questions
+            messages = create_extraction_conversation_messages(text_chunk)
+            output = await run_model(messages)
+            questions = extract_questions_from_output(output)
+
+            # Associate questions with source information and return as a list of tuples
+            outputs.extend([(file_path, text_chunk, question.strip()) for question in questions])
+
         return outputs
 
 
