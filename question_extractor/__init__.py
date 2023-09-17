@@ -12,6 +12,8 @@ import openai.error
 from langchain.chat_models import ChatOpenAI
 from langchain.docstore.document import Document
 from langchain.text_splitter import MarkdownHeaderTextSplitter, RecursiveCharacterTextSplitter
+# Trying to avoid similar questions
+import textdistance
 # from contextlib import asynccontextmanager
 from .markdown import load_markdown_files_from_directory, split_markdown
 from .token_counting import count_tokens_text, count_tokens_messages, get_available_tokens, are_tokens_available_for_both_conversations
@@ -28,7 +30,14 @@ api_key_index = 0
 model_rate_limits = 2000
 max_concurent_request = int(model_rate_limits * 0.75)
 throttler = asyncio.Semaphore(max_concurent_request)
-
+jaro_winkler = textdistance.JaroWinkler()
+similarity_thrashold = 0.9
+edit_disance = textdistance.Levenshtein()
+distance_thrashold = 6
+distance_ratio = 0.25
+question_dict = dict()
+question_list = list()
+question_similarity_lookback = 200
 
 def flatten_nested_lists(nested_lists):
     """
@@ -195,7 +204,30 @@ async def extract_questions_from_text(file_path, text, parallel=True):
             questions = extract_questions_from_output(output)
 
             # Associate questions with source information and return as a list of tuples
-            outputs.extend([(file_path, text_chunk, question.strip()) for question in questions])
+            for question in questions:
+                question = question.strip()
+                if question in question_dict:
+                    continue
+                else:
+                    question_dict[question] = True
+
+                similar = False
+                for q in question_list[-question_similarity_lookback:]:
+                    similarity = jaro_winkler(question, q)
+                    distance = edit_disance(question, q)
+                    if (
+                        similarity > similarity_thrashold and
+                        (distance < distance_thrashold or distance < max(len(question), len(q)) * distance_ratio)
+                    ):
+                        similar = True
+                        break
+
+                if similar:
+                    continue
+                else:
+                    question_list.append(question)
+
+                outputs.append((file_path, text_chunk, question))
 
         return outputs
 
