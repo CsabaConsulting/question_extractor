@@ -18,19 +18,31 @@ system_prompt = \
     "but admit that you need more input from the user or you don't have enough information to answer."
 
 system_prompt = system_prompt.replace("\n", " ").strip()
+fine_tune_types = ["openai", "azure_openai", "palm2"]
+fine_tune_type = "azure_openai"
+if fine_tune_type not in fine_tune_types:
+    raise Exception("Invalid fine tune type")
+
 # Expecting the questions.json with an array of { source, question, answer } pair tuples.
 with open(input_filepath, 'r') as input_file:
     input_json = json.load(input_file)
     # Save the extracted questions as a JSON file
     with open(output_filepath, 'w') as output_file:
         for input_tuple in input_json:
-            qna = {
-                'messages': [
-                    {'role': 'system', 'content': system_prompt},
-                    {'role': 'user', 'content': input_tuple['question']},
-                    {'role': 'assistant', 'content': input_tuple['answer']}
-                ]
-            }
+            qna = {}
+            if fine_tune_type == "openai":
+                qna = {
+                    'messages': [
+                        {'role': 'system', 'content': system_prompt},
+                        {'role': 'user', 'content': input_tuple['question']},
+                        {'role': 'assistant', 'content': input_tuple['answer']}
+                    ]
+                }
+            elif fine_tune_type == "azure_openai":
+                qna = {
+                    'prompt': input_tuple['question'],
+                    'completion': input_tuple['answer']
+                }
 
             json.dump(qna, output_file)
             output_file.write('\n')
