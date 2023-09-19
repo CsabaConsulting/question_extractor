@@ -3,7 +3,7 @@ from pathlib import Path
 
 # Define the input and output paths
 input_filepath = Path('./data/questions.json')
-output_filepath = Path('./data/fine_tune.jsonl')
+output_filepath = Path('./data/fine_tune_palm2.jsonl')
 system_prompt = \
     "You are Casey, an assistant specialized in ThruThink budgeting analysis and projection web application usage. " + \
     "You are also knowledgeable in a wide range of budgeting and accounting topics, including EBITDA, " + \
@@ -19,7 +19,7 @@ system_prompt = \
 
 system_prompt = system_prompt.replace("\n", " ").strip()
 fine_tune_types = ["openai", "azure_openai", "palm2"]
-fine_tune_type = "azure_openai"
+fine_tune_type = "palm2"
 if fine_tune_type not in fine_tune_types:
     raise Exception("Invalid fine tune type")
 
@@ -42,6 +42,11 @@ with open(input_filepath, 'r') as input_file:
                 qna = {
                     'prompt': input_tuple['question'],
                     'completion': input_tuple['answer']
+                }
+            elif fine_tune_type == "palm2":
+                qna = {
+                    'input_text': input_tuple['question'],
+                    'output_text': input_tuple['answer']
                 }
 
             json.dump(qna, output_file)
