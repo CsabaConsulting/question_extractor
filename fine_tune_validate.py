@@ -1,6 +1,6 @@
 import json
 
-DATA_PATH = "<put_your_own_dataset.jsonl>"
+DATA_PATH = "./data/fine_tune_openai.jsonl"
 
 # Load the dataset
 with open(DATA_PATH, 'r', encoding='utf-8') as f:
