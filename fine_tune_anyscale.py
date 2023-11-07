@@ -18,8 +18,7 @@ upload_response = openai.File.create(
 file_id = upload_response['id']
 print(f"Fine tune file {input_filepath} has been uploaded with id {file_id}.\n")
 
-tuning_response = openai.FineTuningJob.create(training_file=file_id, model="meta-llama/Llama-2-70b-chat-hf")
-org_id = tuning_response["organization_id"]
+tuning_response = openai.FineTuningJob.create(training_file=file_id, model="meta-llama/Llama-2-13b-chat-hf")
 tune_model = tuning_response["model"]
 tune_id = tuning_response["id"]
-print(f"Fine started for {input_filepath} ({file_id}) under org {org_id} with ID {tune_id}.\n")
+print(f"Fine started for {input_filepath} ({file_id}) with ID {tune_id}.\n")
