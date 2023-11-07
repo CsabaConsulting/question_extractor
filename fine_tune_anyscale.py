@@ -2,14 +2,14 @@ from pathlib import Path
 import os
 import openai
 
-openai.api_base = "https://api.endpoints.anyscale.com/v1"
-openai.api_key = os.getenv("ANYSCALE_API_KEY") or "ANYSCALE_API_KEY"
-
 # Define the fine tune file path
 input_filepath = Path('./data/fine_tune_openai.jsonl')
 epochs = 3
 
-openai.api_key = os.getenv('OPENAI_API_KEY')
+# AnyScale uses OpenAI's API
+# This code is for Pre 1.0.0 openai PyPi packages (latest is 0.28.1)
+openai.api_base = "https://api.endpoints.anyscale.com/v1"
+openai.api_key = os.getenv("ANYSCALE_API_KEY") or "ANYSCALE_API_KEY"
 upload_response = openai.File.create(
   file=open(input_filepath, 'rb'),
   purpose='fine-tune',
