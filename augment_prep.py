@@ -3,7 +3,7 @@ from pathlib import Path
 
 # Define the input and output paths
 input_filepath = Path('./data/questions.json')
-output_directory = Path('./data/augmentation')
+output_directory = Path('./data/qna')
 
 # Expecting the questions.json with an array of { source, question, answer } pair tuples.
 with open(input_filepath, 'r') as input_file:
@@ -23,10 +23,11 @@ with open(input_filepath, 'r') as input_file:
             file_path = f"{output_directory}/{file_name_stub}_qna.md"
             current_file = open(file_path, 'w')
             current_source = src
-            with open(src, 'r') as src_file:
-                src_lines = src_file.readlines()
-                title = src_lines[0][1:].strip()
-                lines = [f"# {title} Questions and Answers:\n", "\n"]
+            lines = []
+            # with open(src, 'r') as src_file:
+            #     src_lines = src_file.readlines()
+            #     title = src_lines[0][1:].strip()
+            #     lines = [f"# {title} Questions and Answers:\n", "\n"]
 
         answer = input_tuple['answer'].replace("\n\n", "\n").replace("\n\n", "\n").replace("\n\n", "\n")
         lines.extend([
