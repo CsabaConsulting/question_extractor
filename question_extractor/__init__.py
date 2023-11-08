@@ -19,10 +19,8 @@ from .markdown import load_markdown_files_from_directory, split_markdown
 from .token_counting import count_tokens_text, count_tokens_messages, get_available_tokens, are_tokens_available_for_both_conversations
 from .prompts import create_answering_conversation_messages, create_extraction_conversation_messages
 
-# replace the "Key" with your own API key, you can provide multiply APIs in the list
-API_KEYS = [os.getenv("OPENAI_API_KEY") or "OPENAI_API_KEY"]
-api_key_lock = asyncio.Lock()
-api_key_index = 0
+# replace the "Key" with your own API key
+API_KEY = os.getenv("OPENAI_API_KEY") or "OPENAI_API_KEY"
 #---------------------------------------------------------------------------------------------
 # QUESTION PROCESSING
 
@@ -71,10 +69,6 @@ async def run_model(messages):
     Returns:
         str: The model-generated output text after processing the input messages.
     """
-    async with api_key_lock:  # Ensure that the rotation is thread-safe
-        global api_key_index
-        os.environ['OPENAI_API_KEY'] = API_KEYS[api_key_index]
-        api_key_index = (api_key_index + 1) % len(API_KEYS)
     # Count the number of tokens in the input messages
     num_tokens_in_messages = count_tokens_messages(messages)
 
@@ -141,7 +135,6 @@ async def extract_questions_from_text(file_path, text, parallel=True):
         list of tuple: A list of tuples, each containing the file path, text, and extracted question.
     """
     # Ensure the text can be processed by the model
-    global api_key_index
     text = text.strip()
     num_tokens_text = count_tokens_text(text)
 
