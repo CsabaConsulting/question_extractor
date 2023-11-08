@@ -20,7 +20,7 @@ from .token_counting import count_tokens_text, count_tokens_messages, get_availa
 from .prompts import create_answering_conversation_messages, create_extraction_conversation_messages
 
 # replace the "Key" with your own API key
-API_KEY = os.getenv("OPENAI_API_KEY") or "OPENAI_API_KEY"
+# API_KEY = os.getenv("OPENAI_API_KEY") or "OPENAI_API_KEY"
 #---------------------------------------------------------------------------------------------
 # QUESTION PROCESSING
 
@@ -338,6 +338,10 @@ def extract_questions_from_directory(input_folder, verbose=True, parallel=True, 
     Returns:
         list: A list of dictionaries containing path, source, question, and answer information.
     """
+    # Initialize OpenAI package to use AnyScale
+    openai.api_base = "https://api.endpoints.anyscale.com/v1"
+    openai.api_key = os.getenv("ANYSCALE_API_KEY") or "ANYSCALE_API_KEY"
+
     # Load input files from the folder
     if verbose: print(f"Loading files from '{input_folder}'.")
     files = load_markdown_files_from_directory(input_folder)
