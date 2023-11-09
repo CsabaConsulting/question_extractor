@@ -300,7 +300,7 @@ async def process_file(file_path, text, progress_counter, verbose=True, parallel
             result.append({'source': sub_file_path, 'question': question, 'answer': answer})
 
         with open(results_filename, 'w') as output_file2:
-            json.dump(questions, output_file2, indent=2)
+            json.dump(result, output_file2, indent=2)
 
     # Update progress and display information if verbose is True
     progress_counter['nb_files_done'] += 1  # No race condition as we are single-threaded
