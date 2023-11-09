@@ -260,8 +260,9 @@ async def process_file(file_path, text, progress_counter, verbose=True, parallel
     Returns:
         list: A list of dictionaries containing source, question, and answer information.
     """
+    questions_file_name = f"{file_path}.json"
     if Path(file_path).is_file():
-        with open(f"{file_path}.json", 'r') as input_file:
+        with open(questions_file_name, 'r') as input_file:
             questions = json.loads(input_file.read())
     else:
         # Extract questions from the text
@@ -271,7 +272,7 @@ async def process_file(file_path, text, progress_counter, verbose=True, parallel
         if max_qa_pairs > 0:
             questions = questions[:max_qa_pairs]
 
-        with open(f"{file_path}.json", 'w') as output_file:
+        with open(questions_file_name, 'w') as output_file:
             json.dump(questions, output_file, indent=2)
 
     # Build and run answering tasks concurrently
