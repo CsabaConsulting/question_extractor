@@ -3,6 +3,7 @@ import re
 import os
 import asyncio
 import openai
+from pathlib import Path
 from tenacity import (
     retry,
     wait_random_exponential,
@@ -259,15 +260,19 @@ async def process_file(file_path, text, progress_counter, verbose=True, parallel
     Returns:
         list: A list of dictionaries containing source, question, and answer information.
     """
-    # Extract questions from the text
-    questions = await extract_questions_from_text(file_path, text, parallel=parallel)
+    if Path(file_path).is_file():
+        with open(f"{file_path}.json", 'r') as input_file:
+            questions = json.loads(input_file.read())
+    else:
+        # Extract questions from the text
+        questions = await extract_questions_from_text(file_path, text, parallel=parallel)
 
-    # Limit the number of questions processed
-    if max_qa_pairs > 0:
-        questions = questions[:max_qa_pairs]
+        # Limit the number of questions processed
+        if max_qa_pairs > 0:
+            questions = questions[:max_qa_pairs]
 
-    with open(f"{file_path}.json", 'w') as output_file:
-        json.dump(questions, output_file, indent=2)
+        with open(f"{file_path}.json", 'w') as output_file:
+            json.dump(questions, output_file, indent=2)
 
     # Build and run answering tasks concurrently
     tasks = []
