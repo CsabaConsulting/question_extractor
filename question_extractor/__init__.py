@@ -76,7 +76,13 @@ async def run_model(messages):
     num_tokens_available = get_available_tokens(num_tokens_in_messages)
 
     # Create an instance of the ChatOpenAI model with minimum imagination (temperature set to 0)
-    model = ChatOpenAI(temperature=0.0, max_tokens=num_tokens_available)
+    model = ChatOpenAI(
+        temperature=0.0,
+        max_tokens=num_tokens_available,
+        model_name="meta-llama/Llama-2-13b-chat-hf:csaba:nAdbyJW",
+        openai_api_key=os.getenv("ANYSCALE_API_KEY") or "ANYSCALE_API_KEY",
+        openai_api_base="https://api.endpoints.anyscale.com/v1"
+    )
 
     try:
         # Use a semaphore to limit the number of simultaneous calls
