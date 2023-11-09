@@ -261,7 +261,7 @@ async def process_file(file_path, text, progress_counter, verbose=True, parallel
         list: A list of dictionaries containing source, question, and answer information.
     """
     questions_file_name = f"{file_path}.json"
-    if Path(file_path).is_file():
+    if Path(questions_file_name).is_file():
         with open(questions_file_name, 'r') as input_file:
             questions = json.loads(input_file.read())
     else:
