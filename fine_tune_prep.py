@@ -19,7 +19,7 @@ system_prompt = \
     "but admit that you need more input from the user and you don't have enough information to answer."
 
 system_prompt = system_prompt.replace("\n", " ").strip()
-fine_tune_types = ["openai", "azure_openai", "palm2", "anyscale"]
+fine_tune_types = ["openai", "azure_openai", "palm2", "anyscale", "cohere"]
 fine_tune_type = "anyscale"
 if fine_tune_type not in fine_tune_types:
     raise Exception("Invalid fine tune type")
@@ -39,7 +39,7 @@ with open(input_filepath, 'r') as input_file:
                         {'role': 'assistant', 'content': input_tuple['answer']}
                     ]
                 }
-            elif fine_tune_type == "azure_openai":
+            elif fine_tune_type in ["azure_openai", "cohere"]:
                 qna = {
                     'prompt': input_tuple['question'],
                     'completion': input_tuple['answer']
