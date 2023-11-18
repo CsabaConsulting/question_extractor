@@ -20,7 +20,7 @@ system_prompt = \
 
 system_prompt = system_prompt.replace("\n", " ").strip()
 fine_tune_types = ["openai", "azure_openai", "palm2", "anyscale", "cohere"]
-fine_tune_type = "anyscale"
+fine_tune_type = "cohere"
 if fine_tune_type not in fine_tune_types:
     raise Exception("Invalid fine tune type")
 
